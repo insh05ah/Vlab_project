@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./src/quiz.css">
+    <title>Quiz</title>
+</head>
+
+<body>
+    <main>
+        <div class="containerNew">
+            <header>
+
+                <div class="timer">
+                    <p>
+                        Time:
+                        <span id="timer">
+                            0
+                        </span>
+                    </p>
+                </div>
+            </header>
+
+            <main class="quiz">
+                <div id="quiz-start">
+                    <div class="landing" id="start-screen">
+                        <h1 id="top">
+                            Quiz on Topic
+                        </h1>
+                        <p>
+                            Try to answer these simple questions.
+                        </p>
+                        <button id="start" onclick="quizStart()">
+                            Start Quiz
+                        </button>
+                    </div>
+                </div>
+
+                <div class="hide" id="questions">
+                    <h2 id="question-words"></h2>
+                    <div class="options" id="options">
+                    </div>
+                </div>
+
+                <div class="hide" id="quiz-end">
+                    <h2>All Done!</h2>
+                    <p>Your final score is:
+                        <span id="score-final">
+                        </span>
+                    </p>
+                </div>
+
+                <div id="feedback" class="feedback hide">
+                </div>
+            </main>
+        </div>
+    </main>
+    <script>
+        // script.js
+
+        let questions = [
+            {
+                prompt: `What will the following code output?
+                def greet(name, age):
+                    print(f"Hello, {name}. You are {age} years old.")
+                greet("Alice", 25)`,
+                options: [
+                    "Hello, Alice. You are 25 years old.",
+                    "Hello, 25. You are Alice years old.",
+                    "Error: age is missing",
+                    "Error: name is missing",
+                ],
+                answer: "Hello, Alice. You are 25 years old.",
+            },
+
+            {
+                prompt: `Which of the following is NOT a valid way to call the function below?
+                def add_numbers(a, b=10):
+                    return a + b`,
+                options: [
+                    "add_number(5)",
+                    "add_number(3, 15)",
+                    "add_number(a=4, b=19)",
+                    "add_number(b=3, a)",
+                ],
+                answer: "add_number(b=3, a)",
+            },
+
+            {
+                prompt: `What will the following code output?
+                def calculate(a, b, /, *, c):
+                    return a + b + c
+                print(calculate(1, 2, c=3))`,
+                options: [
+                    "5",
+                    "Error: c must be passed positionally",
+                    "Error: a and b must be passed as keywords",
+                    "6",
+                ],
+                answer: "6",
+            },
+
+            {
+                prompt: `Which of the following is true about keyword arguments?`,
+                options: [
+                    "We can pass the keywords as the arguments", 
+                    "We can give the argument in a particular order", 
+                    "We can equate the value to the corresponding parameter name while passing", 
+                    "All the above"
+                ],
+                answer: "We can equate the value to the corresponding parameter name while passing",
+            },
+
+            {
+                prompt: `Which of the following do not give any error?`,
+                options: [
+                    "def pow(a=1,b): return a**b pow(5)",
+                    "def pow(a,b=0): return a**b pow(3)",
+                    "def pow(a,b): return a**b pow(6)",
+                    "None of the above",
+                ],
+                answer: "def pow(a,b=0): return a**b pow(3)",
+            },
+        ];
+
+        // Get Dom Elements
+
+        let questionsEl =
+            document.querySelector(
+                "#questions"
+            );
+        let timerEl =
+            document.querySelector("#timer");
+        let choicesEl =
+            document.querySelector("#options");
+        let submitBtn = document.querySelector(
+            "#submit-score"
+        );
+        let startBtn =
+            document.querySelector("#start");
+        let nameEl =
+            document.querySelector("#name");
+        let feedbackEl = document.querySelector(
+            "#feedback"
+        );
+        let reStartBtn =
+            document.querySelector("#restart");
+
+        // Quiz's initial state
+        let currentQuestionIndex = 0;
+        let time = questions.length * 15;
+        let timerId;
+
+        // Start quiz and hide frontpage
+
+        function quizStart() {
+            timerId = setInterval(
+                clockTick,
+                1000
+            );
+            timerEl.textContent = time;
+            let landingScreenEl =
+                document.getElementById(
+                    "start-screen"
+                );
+            landingScreenEl.setAttribute(
+                "class",
+                "hide"
+            );
+            questionsEl.removeAttribute(
+                "class"
+            );
+            getQuestion();
+        }
+
+        // Loop through array of questions and
+        // Answers and create list with buttons
+        function getQuestion() {
+            let currentQuestion =
+                questions[currentQuestionIndex];
+            let promptEl =
+                document.getElementById(
+                    "question-words"
+                );
+            promptEl.textContent =
+                currentQuestion.prompt;
+            choicesEl.innerHTML = "";
+            currentQuestion.options.forEach(
+                function (choice, i) {
+                    let choiceBtn =
+                        document.createElement(
+                            "button"
+                        );
+                    choiceBtn.setAttribute(
+                        "value",
+                        choice
+                    );
+                    choiceBtn.textContent =
+                        i + 1 + ". " + choice;
+                    choiceBtn.onclick =
+                        questionClick;
+                    choicesEl.appendChild(
+                        choiceBtn
+                    );
+                }
+            );
+        }
+
+        // Check for right answers and deduct
+        // Time for wrong answer, go to next question
+
+        function questionClick() {
+            if (
+                this.value !==
+                questions[currentQuestionIndex]
+                    .answer
+            ) {
+                time -= 10;
+                if (time < 0) {
+                    time = 0;
+                }
+                timerEl.textContent = time;
+                feedbackEl.textContent = `Wrong! The correct answer was 
+    ${questions[currentQuestionIndex].answer}.`;
+                feedbackEl.style.color = "red";
+            } else {
+                feedbackEl.textContent =
+                    "Correct!";
+                feedbackEl.style.color =
+                    "green";
+            }
+            feedbackEl.setAttribute(
+                "class",
+                "feedback"
+            );
+            setTimeout(function () {
+                feedbackEl.setAttribute(
+                    "class",
+                    "feedback hide"
+                );
+            }, 2000);
+            currentQuestionIndex++;
+            if (
+                currentQuestionIndex ===
+                questions.length
+            ) {
+                quizEnd();
+            } else {
+                getQuestion();
+            }
+        }
+
+        // End quiz by hiding questions,
+        // Stop timer and show final score
+
+        function quizEnd() {
+            clearInterval(timerId);
+            let endScreenEl =
+                document.getElementById(
+                    "quiz-end"
+                );
+            endScreenEl.removeAttribute(
+                "class"
+            );
+            let finalScoreEl =
+                document.getElementById(
+                    "score-final"
+                );
+            finalScoreEl.textContent = time;
+            questionsEl.setAttribute(
+                "class",
+                "hide"
+            );
+        }
+
+        // End quiz if timer reaches 0
+
+        function clockTick() {
+            time--;
+            timerEl.textContent = time;
+            if (time <= 0) {
+                quizEnd();
+            }
+        }
+
+        // Save score in local storage
+        // Along with users' name
+
+       
+        // Save users' score after pressing enter
+
+        function checkForEnter(event) {
+            if (event.key === "Enter") {
+                saveHighscore();
+                alert(
+                    "Your Score has been Submitted"
+                );
+            }
+        }
+        nameEl.onkeyup = checkForEnter;
+
+        // Save users' score after clicking submit
+        
+        // Start quiz after clicking start quiz
+
+        startBtn.onclick = quizStart();
+
+    </script>
+</body>
+
+</html>
